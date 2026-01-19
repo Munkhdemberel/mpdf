@@ -13261,6 +13261,18 @@ class Mpdf implements \Psr\Log\LoggerAwareInterface
 	 */
 	function WriteHTML($html, $mode = HTMLParserMode::DEFAULT_MODE, $init = true, $close = true)
 	{
+	 // --- Security mitigation for CVE-2022-50897 (RFI) ---
+	    if (is_string($html)) {
+	
+	        // Block remote URLs
+	        if (preg_match('/https?:\/\/[^\s\'"]+/i', $html)) {
+	            throw new \Mpdf\MpdfException('Remote URLs in HTML are blocked for security reasons.');
+	        }
+	        // Block file:// wrapper
+	        if (stripos($html, 'file://') !== false) {
+	            throw new \Mpdf\MpdfException('File stream access is blocked.');
+	        }
+	    }
 		/* Check $html is an integer, float, string, boolean or class with __toString(), otherwise throw exception */
 		if (is_scalar($html) === false) {
 			if (!is_object($html) || ! method_exists($html, '__toString')) {
